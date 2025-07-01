@@ -3,6 +3,7 @@ import Home from '../components/HomePage.vue';
 import About from '../components/AboutPage.vue';
 import Register from '../components/RegisterPage.vue';
 import Profile from '../components/ProfilePage.vue';
+import ManageCurriculum from '../components/ManageCurriculum.vue';
 
 
 const routes = [
@@ -10,7 +11,8 @@ const routes = [
   { path: '/about', component: About },
   { path: '/register', component: Register },
   { path: '/profile', component: Profile, meta: { requiresAuth: true } },
-{ path: '/login', component: () => import('@/components/LoginPage.vue') }
+  { path: '/curriculum', name: 'ManageCurriculum', component: ManageCurriculum, meta: { requiresAuth: true } },
+  { path: '/login', component: () => import('@/components/LoginPage.vue') }
 ];
 
 

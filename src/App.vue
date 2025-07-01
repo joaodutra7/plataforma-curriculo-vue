@@ -16,6 +16,7 @@
         <li><router-link to="/" class="block py-2 md:py-0 hover:underline">Início</router-link></li>
         <li><router-link to="/about" class="block py-2 md:py-0 hover:underline">Sobre</router-link></li>
         <li><router-link to="/register" class="block py-2 md:py-0 hover:underline">Registrar-se</router-link></li>
+        <li><router-link to="/curriculum" class="block py-2 md:py-0 hover:underline">Currículo</router-link></li>
         <li v-if="isAuthenticated">
           <router-link to="/profile" class="block py-2 md:py-0 hover:underline">Perfil</router-link>
         </li>
