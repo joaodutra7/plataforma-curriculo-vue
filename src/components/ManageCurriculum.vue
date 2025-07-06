@@ -6,7 +6,7 @@
 
     <div v-else-if="curriculum">
       <h1 class="text-3xl font-bold mb-4">Seu Currículo</h1>
-      <pre class="bg-gray-100 p-4 rounded-lg">{{ curriculum }}</pre>
+      <CurriculumDisplay :curriculum="curriculum" />
       <button @click="isEditing = true" class="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
         Editar Currículo
       </button>
@@ -25,11 +25,13 @@
 
 <script>
 import axios from 'axios';
-import CurriculumForm from '@/components/CurriculumForm.vue'; // Importa o formulário
+import CurriculumForm from '@/components/CurriculumForm.vue';
+import CurriculumDisplay from '@/components/CurriculumDisplay.vue';
 
 export default {
   components: {
     CurriculumForm,
+    CurriculumDisplay,
   },
   data() {
     return {
