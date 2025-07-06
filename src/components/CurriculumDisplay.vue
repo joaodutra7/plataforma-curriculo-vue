@@ -77,7 +77,16 @@ export default {
     },
 
     exportToPDF() {
-      const element = this.$refs.exportableContent; 
+      console.log('Iniciando exportação de PDF...');
+      
+      const element = this.$refs.exportableContent;
+      
+      console.log('Elemento para exportar:', element);
+
+      if (!element) {
+        alert('Erro crítico: O elemento do currículo não foi encontrado no DOM.');
+        return;
+      }
 
       const options = {
         margin:       0.5,
@@ -85,9 +94,16 @@ export default {
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-      };
+      }; [cite: 25]
 
-      html2pdf().set(options).from(element).save();
+      try {
+        // Colocamos a chamada principal dentro do try
+        html2pdf().set(options).from(element).save(); [cite: 26]
+      } catch (error) {
+        // Se qualquer erro ocorrer durante a geração, ele será capturado aqui
+        console.error('### ERRO AO GERAR PDF ###:', error);
+        alert('Ocorreu um erro inesperado ao tentar gerar o PDF. Verifique o console para mais detalhes.');
+      }
     }
   }
 };
