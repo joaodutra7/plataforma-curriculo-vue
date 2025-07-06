@@ -1,9 +1,11 @@
 <template>
   <div ref="exportableContent" class="bg-white shadow-lg rounded-lg p-8 max-w-4xl mx-auto my-8">
     
-    <div class="text-right mb-4">
-      <button @click="exportToPDF" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 text-sm">
+    <div class="text-right mb-4 flex justify-end gap-2"> <button @click="exportToPDF" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 text-sm">
         Exportar para PDF
+      </button>
+      <button @click="sendPDFByEmail" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 text-sm">
+        Enviar por E-mail
       </button>
     </div>
 
@@ -57,8 +59,8 @@
 </template>
 
 <script>
-
 import jsPDF from 'jspdf';
+import axios from 'axios'; // Importe o axios para fazer a requisição HTTP
 
 export default {
   props: {
@@ -68,20 +70,18 @@ export default {
     },
   },
   methods: {
-    // Função para formatar a data para o padrão brasileiro
     formatDate(dateString) {
       if (!dateString) return '';
       const date = new Date(dateString);
-      // Adiciona a opção timeZone para corrigir possíveis problemas de fuso horário (pega o dia certo)
       return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date);
     },
 
-     exportToPDF() {
-      const doc = new jsPDF('p', 'pt', 'a4'); // Usando pontos (pt) como unidade
+    generatePdfDocument() {
+      const doc = new jsPDF('p', 'pt', 'a4');
       const margin = 40;
       const pageWidth = doc.internal.pageSize.getWidth();
       const usableWidth = pageWidth - (margin * 2);
-      let y = margin; // Nosso "cursor" vertical
+      let y = margin;
 
       // --- Cabeçalho ---
       doc.setFontSize(22);
@@ -101,15 +101,14 @@ export default {
         doc.setFont('helvetica', 'bold');
         doc.text('Resumo Profissional', margin, y);
         y += 15;
-        doc.line(margin, y, pageWidth - margin, y); // Linha horizontal
+        doc.line(margin, y, pageWidth - margin, y);
         y += 15;
 
         doc.setFontSize(11);
         doc.setFont('helvetica', 'normal');
-        // jsPDF não quebra linhas automaticamente. Precisamos fazer isso manualmente.
         const summaryLines = doc.splitTextToSize(this.curriculum.summary, usableWidth);
         doc.text(summaryLines, margin, y);
-        y += (summaryLines.length * 12) + 20; // Aumenta o 'y' baseado no número de linhas
+        y += (summaryLines.length * 12) + 20;
       }
 
       // --- Experiência Profissional ---
@@ -122,10 +121,9 @@ export default {
         y += 15;
 
         this.curriculum.experiences.forEach(exp => {
-          // Controle de quebra de página
-          if (y > doc.internal.pageSize.getHeight() - 100) { // Se estiver perto do fim da página
+          if (y > doc.internal.pageSize.getHeight() - 100) {
             doc.addPage();
-            y = margin; // Reseta o cursor para o topo da nova página
+            y = margin;
           }
           
           doc.setFontSize(12);
@@ -146,7 +144,94 @@ export default {
         });
       }
 
+      // --- Formação Acadêmica (Adicionei a lógica para o PDF aqui, pois não estava na sua função original) ---
+      if (this.curriculum.education && this.curriculum.education.length) {
+        if (y > doc.internal.pageSize.getHeight() - 100) {
+            doc.addPage();
+            y = margin;
+        }
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Formação Acadêmica', margin, y);
+        y += 15;
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 15;
+
+        this.curriculum.education.forEach(edu => {
+          if (y > doc.internal.pageSize.getHeight() - 100) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text(edu.degree, margin, y);
+          y += 14;
+
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'italic');
+          doc.text(`${edu.institution} | ${edu.fieldOfStudy} | ${this.formatDate(edu.startDate)} - ${edu.endDate ? this.formatDate(edu.endDate) : 'Concluído'}`, margin, y);
+          y += 14; // Espaço após a linha de formação
+        });
+        y += 10; // Espaço extra após a última formação
+      }
+
+      // --- Habilidades (Adicionei a lógica para o PDF aqui, pois não estava na sua função original) ---
+      if (this.curriculum.skills && this.curriculum.skills.length) {
+        if (y > doc.internal.pageSize.getHeight() - 100) {
+            doc.addPage();
+            y = margin;
+        }
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Habilidades', margin, y);
+        y += 15;
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 15;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        const skillsText = this.curriculum.skills.join(', ');
+        const skillsLines = doc.splitTextToSize(skillsText, usableWidth);
+        doc.text(skillsLines, margin, y);
+        y += (skillsLines.length * 12) + 20;
+      }
+      
+      return doc;
+    },
+
+    exportToPDF() {
+      const doc = this.generatePdfDocument();
       doc.save(`curriculo_${this.curriculum.personalData.fullName.replace(/\s+/g, '_')}.pdf`);
+    },
+
+    async sendPDFByEmail() {
+      try {
+        const doc = this.generatePdfDocument();
+        // Converte o PDF para um Blob ou ArrayBuffer para enviar
+        const pdfBlob = doc.output('blob'); // 'blob' é ideal para FormData
+
+        const formData = new FormData();
+        formData.append('pdf', pdfBlob, `curriculo_${this.curriculum.personalData.fullName.replace(/\s+/g, '_')}.pdf`);
+        formData.append('recipientEmail', this.curriculum.personalData.email); // O e-mail para onde enviar
+        formData.append('fullName', this.curriculum.personalData.fullName); // Nome para o corpo do e-mail
+
+        // URL do seu endpoint de backend para envio de e-mail
+        const response = await axios.post('/api/send-curriculum-email', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data', // Importante para enviar arquivos
+            'Authorization': `Bearer ${localStorage.getItem('token')}` // Se você usar autenticação
+          }
+        });
+
+        if (response.status === 200) {
+          alert('Currículo enviado para o seu e-mail com sucesso!');
+        } else {
+          alert('Ocorreu um erro ao enviar o currículo. Tente novamente.');
+        }
+      } catch (error) {
+        console.error('Erro ao enviar o PDF por e-mail:', error);
+        alert('Ocorreu um erro ao enviar o currículo. Verifique o console para mais detalhes.');
+      }
     }
   }
 };
