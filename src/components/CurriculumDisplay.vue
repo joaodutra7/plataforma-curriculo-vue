@@ -88,23 +88,22 @@ export default {
         return;
       }
 
+      // Este é o objeto de opções correto, sem nenhuma citação.
       const options = {
         margin:       0.5,
         filename:     `curriculo_${this.curriculum.personalData.fullName.replace(/\s+/g, '_')}.pdf`,
         image:        { type: 'jpeg', quality: 0.98 },
         html2canvas:  { scale: 2, useCORS: true },
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-      }; [cite: 25]
+      };
 
       try {
-        // Colocamos a chamada principal dentro do try
-        html2pdf().set(options).from(element).save(); [cite: 26]
+        html2pdf().set(options).from(element).save();
       } catch (error) {
-        // Se qualquer erro ocorrer durante a geração, ele será capturado aqui
         console.error('### ERRO AO GERAR PDF ###:', error);
-        alert('Ocorreu um erro inesperado ao tentar gerar o PDF. Verifique o console para mais detalhes.');
+        alert('Ocorreu um erro inesperado ao tentar gerar o PDF. Verifique o console do navegador para mais detalhes.');
       }
-    }
+  }
   }
 };
 </script>
