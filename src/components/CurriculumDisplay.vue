@@ -58,7 +58,7 @@
 
 <script>
 
-import html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
 
 export default {
   props: {
@@ -76,39 +76,78 @@ export default {
       return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date);
     },
 
-    exportToPDF() {
-      console.log('Iniciando exportação de PDF...');
-      
-      const element = this.$refs.exportableContent;
-      
-      console.log('Elemento para exportar:', element);
+     exportToPDF() {
+      const doc = new jsPDF('p', 'pt', 'a4'); // Usando pontos (pt) como unidade
+      const margin = 40;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const usableWidth = pageWidth - (margin * 2);
+      let y = margin; // Nosso "cursor" vertical
 
-      if (!element) {
-        alert('Erro crítico: O elemento do currículo não foi encontrado no DOM.');
-        return;
+      // --- Cabeçalho ---
+      doc.setFontSize(22);
+      doc.setFont('helvetica', 'bold');
+      doc.text(this.curriculum.personalData.fullName, pageWidth / 2, y, { align: 'center' });
+      y += 20;
+
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      const contactInfo = `${this.curriculum.personalData.email} | ${this.curriculum.personalData.phone}`;
+      doc.text(contactInfo, pageWidth / 2, y, { align: 'center' });
+      y += 30;
+
+      // --- Resumo Profissional ---
+      if (this.curriculum.summary) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Resumo Profissional', margin, y);
+        y += 15;
+        doc.line(margin, y, pageWidth - margin, y); // Linha horizontal
+        y += 15;
+
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'normal');
+        // jsPDF não quebra linhas automaticamente. Precisamos fazer isso manualmente.
+        const summaryLines = doc.splitTextToSize(this.curriculum.summary, usableWidth);
+        doc.text(summaryLines, margin, y);
+        y += (summaryLines.length * 12) + 20; // Aumenta o 'y' baseado no número de linhas
       }
 
-      // Este é o objeto de opções correto, sem nenhuma citação.
-      const options = {
-        margin:       0.5,
-        filename:     `curriculo_${this.curriculum.personalData.fullName.replace(/\s+/g, '_')}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-      };
+      // --- Experiência Profissional ---
+      if (this.curriculum.experiences && this.curriculum.experiences.length) {
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Experiência Profissional', margin, y);
+        y += 15;
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 15;
 
-      console.log('Iniciando a geração do PDF...');
+        this.curriculum.experiences.forEach(exp => {
+          // Controle de quebra de página
+          if (y > doc.internal.pageSize.getHeight() - 100) { // Se estiver perto do fim da página
+            doc.addPage();
+            y = margin; // Reseta o cursor para o topo da nova página
+          }
+          
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
+          doc.text(exp.jobTitle, margin, y);
+          y += 14;
 
-      html2pdf().from(element).set(options).toPdf().get('pdf').then(function (pdf) {
-        // Este bloco SÓ será executado se o PDF for gerado com sucesso.
-        console.log('PDF gerado com sucesso! Iniciando download...');
-        pdf.save();
-      }).catch(function (err) {
-        // catch mais específico e poderoso para erros internos da biblioteca.
-        console.error('### ERRO INTERNO DO HTML2PDF ###:', err);
-        alert('Ocorreu um erro interno ao gerar o PDF. Verifique o console.');
-      });
-  }
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'italic');
+          doc.text(`${exp.company} | ${this.formatDate(exp.startDate)} - ${exp.endDate ? this.formatDate(exp.endDate) : 'Presente'}`, margin, y);
+          y += 14;
+
+          doc.setFontSize(11);
+          doc.setFont('helvetica', 'normal');
+          const expLines = doc.splitTextToSize(exp.description, usableWidth);
+          doc.text(expLines, margin, y);
+          y += (expLines.length * 12) + 20;
+        });
+      }
+
+      doc.save(`curriculo_${this.curriculum.personalData.fullName.replace(/\s+/g, '_')}.pdf`);
+    }
   }
 };
 </script>
