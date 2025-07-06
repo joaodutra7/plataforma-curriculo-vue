@@ -8,12 +8,9 @@
       <h1 class="text-3xl font-bold mb-4">Seu Currículo</h1>
       <CurriculumDisplay :curriculum="curriculum" />
 
-      <div class="text-center mt-6 flex justify-center gap-4">
+      <div class="text-center mt-6">
           <button @click="isEditing = true" class="bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
             Editar Currículo
-          </button>
-          <button @click="exportCurriculumToPDF" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
-            Exportar para PDF
           </button>
       </div>
 
@@ -31,7 +28,6 @@
 
 <script>
 
-import html2pdf from 'html2pdf.js';
 import axios from 'axios';
 import CurriculumForm from '@/components/CurriculumForm.vue';
 import CurriculumDisplay from '@/components/CurriculumDisplay.vue';
@@ -86,28 +82,6 @@ export default {
     } finally {
       this.isLoading = false;
     }
-  },
-
-  exportCurriculumToPDF() {
-    this.$nextTick(() => {
-      const element = this.$refs.curriculumContent?.$el;
-
-      if (!element) {
-        console.error('Elemento do currículo não encontrado para exportação.');
-        alert('Ocorreu um erro ao preparar o PDF. Por favor, tente novamente.');
-        return;
-      }
-
-      const options = {
-        margin:       0.5,
-        filename:     `curriculo_${this.curriculum.personalData.fullName.replace(/\s+/g, '_')}.pdf`,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
-      };
-
-      html2pdf().set(options).from(element).save();
-    });
   }
 }
 };

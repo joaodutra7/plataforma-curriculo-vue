@@ -1,6 +1,12 @@
 <template>
-  <div class="bg-white shadow-lg rounded-lg p-8 max-w-4xl mx-auto my-8">
+  <div ref="exportableContent" class="bg-white shadow-lg rounded-lg p-8 max-w-4xl mx-auto my-8">
     
+    <div class="text-right mb-4">
+      <button @click="exportToPDF" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700 text-sm">
+        Exportar para PDF
+      </button>
+    </div>
+
     <header class="text-center mb-8 border-b pb-6">
       <h1 class="text-4xl font-bold text-gray-800">{{ curriculum.personalData.fullName }}</h1>
       <div class="flex justify-center gap-6 mt-4 text-gray-600">
@@ -51,6 +57,9 @@
 </template>
 
 <script>
+
+import html2pdf from 'html2pdf.js';
+
 export default {
   props: {
     curriculum: {
@@ -65,6 +74,20 @@ export default {
       const date = new Date(dateString);
       // Adiciona a opção timeZone para corrigir possíveis problemas de fuso horário (pega o dia certo)
       return new Intl.DateTimeFormat('pt-BR', { timeZone: 'UTC' }).format(date);
+    },
+
+    exportToPDF() {
+      const element = this.$refs.exportableContent; 
+
+      const options = {
+        margin:       0.5,
+        filename:     `curriculo_${this.curriculum.personalData.fullName.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(options).from(element).save();
     }
   }
 };
