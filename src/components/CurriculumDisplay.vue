@@ -97,12 +97,17 @@ export default {
         jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
       };
 
-      try {
-        html2pdf().set(options).from(element).save();
-      } catch (error) {
-        console.error('### ERRO AO GERAR PDF ###:', error);
-        alert('Ocorreu um erro inesperado ao tentar gerar o PDF. Verifique o console do navegador para mais detalhes.');
-      }
+      console.log('Iniciando a geração do PDF...');
+
+      html2pdf().from(element).set(options).toPdf().get('pdf').then(function (pdf) {
+        // Este bloco SÓ será executado se o PDF for gerado com sucesso.
+        console.log('PDF gerado com sucesso! Iniciando download...');
+        pdf.save();
+      }).catch(function (err) {
+        // catch mais específico e poderoso para erros internos da biblioteca.
+        console.error('### ERRO INTERNO DO HTML2PDF ###:', err);
+        alert('Ocorreu um erro interno ao gerar o PDF. Verifique o console.');
+      });
   }
   }
 };
