@@ -7,8 +7,13 @@
     <div v-else-if="curriculum">
       <h1 class="text-3xl font-bold mb-4">Seu Currículo</h1>
       <CurriculumDisplay :curriculum="curriculum" />
+
       <button @click="isEditing = true" class="mt-4 bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
         Editar Currículo
+      </button>
+
+      <button @click="exportCurriculumToPDF" class="bg-purple-600 text-white py-2 px-4 rounded hover:bg-purple-700">
+        Exportar para PDF
       </button>
 
       <CurriculumForm v-if="isEditing" :existing-data="curriculum" @saved="fetchCurriculum" />
@@ -24,6 +29,8 @@
 </template>
 
 <script>
+
+import html2pdf from 'html2pdf.js';
 import axios from 'axios';
 import CurriculumForm from '@/components/CurriculumForm.vue';
 import CurriculumDisplay from '@/components/CurriculumDisplay.vue';
@@ -78,7 +85,24 @@ export default {
     } finally {
       this.isLoading = false;
     }
-  }
+  },
+
+  exportCurriculumToPDF() {
+      // Seleciona o elemento do componente CurriculumDisplay usando a ref que definimos
+      const element = this.$refs.curriculumContent.$el;
+
+      // Define as opções para a geração do PDF
+      const options = {
+        margin:       0.5, // Margem em polegadas
+        filename:     `curriculo_${this.curriculum.personalData.fullName.replace(/\s+/g, '_')}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true }, // Aumenta a escala para melhor resolução
+        jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+      };
+
+      // Usa a biblioteca para gerar o PDF a partir do elemento e das opções
+      html2pdf().set(options).from(element).save();
+    }
 }
 };
 </script>
